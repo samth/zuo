@@ -1,5 +1,5 @@
 #lang racket/base
-(require racket/list (for-syntax racket/base syntax/parse racket/syntax)
+(require racket/list (for-syntax racket/base syntax/parse racket/syntax racket/format)
          (prefix-in r: racket/base))
 (provide define lambda #%module-begin hash hash-set provide #%app require
          rename-in only-in rename-out
@@ -138,7 +138,6 @@
          syntax->datum
          datum->syntax
          bound-identifier=?
-         syntax-error
          bad-syntax
          misplaced-syntax
          duplicate-identifier
@@ -238,7 +237,6 @@
   variable-ref
   variable-set!
   string-sha256
-  syntax-error
   bad-syntax
   misplaced-syntax
   duplicate-identifier
@@ -286,12 +284,43 @@
 
 (define-syntax-rule (provide-targets id ...) (provide id ...))
 
+(module stx racket/base
+  (provide syntax-error)
+  (define (syntax-error . _) (error 'syntax-error)))
+
+(require (submod "." stx))
+
+(provide syntax-error)
+(require (for-syntax (submod "." stx) racket/list racket/syntax))
+
+(provide (for-syntax syntax-error
+                     ~a
+                     check-duplicates))
+
+(define-for-syntax (convert-in stx)
+  (let loop ([_e stx])
+    (define e (syntax-e _e))
+    (cond
+      [(list? e) (map loop e)]
+      [(pair? e) (cons (loop (car e)) (loop (cdr e)))]
+      [(symbol? e) _e]
+      [else e])))
+
+(define-for-syntax (convert-out i l)
+  (datum->syntax i l))
+
 (define-syntax (defstx stx)
   (syntax-case stx ()
-    [(_ (i arg) e ...)
-     #'(define-syntax-rule (i . _) (void))]
+    [(_ (i arg) e ... last)
+     #'(define-syntax i
+         (λ (_arg) (let ([arg (convert-in _arg)]) e ... (convert-out _arg last))))
+     #;
+     (syntax/loc stx (define-syntax-rule (i . _) (void)))]
     [(_ i e)
-     #'(define-syntax-rule (i . _) (void))]))
+     #'(define-syntax i
+         (λ (stx) (convert-out stx (e (convert-in stx)))))
+     #;
+     (syntax/loc stx (define-syntax-rule (i . _) (void)))]))
 
 (provide (rename-out [defstx define-syntax]))
 
