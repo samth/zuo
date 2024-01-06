@@ -33,6 +33,7 @@
          require
          provide
          module+
+	 module
          quote-module-path
 
          pair?
