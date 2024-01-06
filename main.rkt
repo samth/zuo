@@ -20,13 +20,13 @@
        #`(begin (require (file #,p))
                 (provide (all-from-out (file #,p)))))]))
 
-(require-zuo "cmdline.zuo")
-(require-zuo "glob.zuo")
-(require-zuo "build.zuo")
-(require-zuo "c.zuo")
-(require-zuo "jobserver.zuo")
-(require-zuo "shell.zuo")
-(require-zuo "thread.zuo")
+;(require-zuo "cmdline.zuo")
+;(require-zuo "glob.zuo")
+;; (require-zuo "build.zuo")
+;; (require-zuo "c.zuo")
+;; (require-zuo "jobserver.zuo")
+;; (require-zuo "shell.zuo")
+;; (require-zuo "thread.zuo")
 
 
 (require racket/format racket/include)
